@@ -1,1 +1,74 @@
-hihi
+# Import
+from geopy.geocoders import Nominatim
+from geopy.distance import geodesic
+import folium
+import time
+
+# Khởi tạo geocoder
+geolocator = Nominatim(user_agent="geo_app")
+
+# ===== 1. Danh sách địa chỉ (ví dụ ở TP.HCM) =====
+addresses = [
+    "UEH University, Ho Chi Minh City",
+    "Ben Thanh Market, Ho Chi Minh City",
+    "Nguyen Hue Walking Street, Ho Chi Minh City",
+    "Vincom Center Dong Khoi, Ho Chi Minh City",
+    "Saigon Notre-Dame Cathedral, Ho Chi Minh City",
+    "Tao Dan Park, Ho Chi Minh City",
+    "Tan Son Nhat Airport, Ho Chi Minh City",
+    "Landmark 81, Ho Chi Minh City",
+    "Pham Ngu Lao Street, Ho Chi Minh City",
+    "University of Science HCMUS"
+]
+
+# ===== 2. Geocoding =====
+locations = []
+main =[]
+
+for addr in addresses:
+    try:
+        location = geolocator.geocode(addr)
+        if addr == "UEH University, Ho Chi Minh City":
+            main.append({"address": addr,
+                "lat": location.latitude,
+                "lon": location.longitude})    
+        elif location:
+            locations.append({
+                "address": addr,
+                "lat": location.latitude,
+                "lon": location.longitude
+            })
+        time.sleep(1)  # tránh bị block API
+    except:
+        print(f"Lỗi với: {addr}")
+
+# ===== 3. Chọn điểm trung tâm =====
+center = main[0]  # UEH làm trung tâm
+
+# ===== 4. Tính khoảng cách =====
+for loc in locations:
+    loc["distance_km"] = geodesic(
+        (center["lat"], center["lon"]),
+        (loc["lat"], loc["lon"])
+    ).km
+
+# ===== 5. Vẽ bản đồ =====
+m = folium.Map(location=[center["lat"], center["lon"]], zoom_start=13)
+
+# Marker trung tâm
+folium.Marker(
+    [center["lat"], center["lon"]],
+    popup="Trung tâm (UEH)",
+    icon=folium.Icon(color="red")
+).add_to(m)
+
+# Marker các điểm còn lại
+for loc in locations:
+    folium.Marker(
+        [loc["lat"], loc["lon"]],
+        popup=f"{loc['address']}<br>Khoảng cách: {loc['distance_km']:.2f} km"
+    ).add_to(m)
+
+# Hiển thị
+m
+
