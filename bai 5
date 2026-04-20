@@ -1,0 +1,36 @@
+!pip install folium geopandas shapely
+!pip install folium geopy
+
+import folium
+from geopy.distance import geodesic
+
+# 1. Tọa độ trung tâm (UEH cơ sở B)
+center = (10.762622, 106.660172)
+
+# 2. Tạo bản đồ
+m = folium.Map(location=center, zoom_start=13)
+
+# 3. Thêm marker trung tâm
+folium.Marker(
+    location=center,
+    popup="Trung tâm UEH",
+    icon=folium.Icon(color="red")
+).add_to(m)
+
+# 4. Các bán kính (km)
+radii = [3, 5, 10]
+colors = ["green", "orange", "blue"]
+
+# 5. Vẽ các vùng phục vụ
+for r, color in zip(radii, colors):
+    folium.Circle(
+        location=center,
+        radius=r * 1000,  # đổi km -> mét
+        color=color,
+        fill=True,
+        fill_opacity=0.2,
+        popup=f"Bán kính {r} km"
+    ).add_to(m)
+
+# 6. Hiển thị
+m
