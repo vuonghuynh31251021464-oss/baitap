@@ -1,0 +1,59 @@
+!pip install folium pandas numpy
+
+import pandas as pd
+import numpy as np
+import folium
+import random
+
+# Tạo dữ liệu giả lập
+np.random.seed(42)
+n = 100
+data = pd.DataFrame({
+    "lat": 10.75 + np.random.rand(n)*0.05,
+    "lon": 106.65 + np.random.rand(n)*0.05,
+    "traffic_density": np.random.randint(10, 100, n),
+    "speed": np.random.randint(10, 60, n)
+})
+
+# Tính risk
+data["risk"] = data["traffic_density"] / data["speed"]
+data["risk"] = (data["risk"] - data["risk"].min()) / (data["risk"].max() - data["risk"].min())
+
+# Tạo bản đồ
+m = folium.Map(location=[10.76, 106.68], zoom_start=13)
+
+def get_color(risk):
+    if risk < 0.3:
+        return "green"
+    elif risk < 0.6:
+        return "orange"
+    else:
+        return "red"
+
+# Vẽ điểm
+for _, row in data.iterrows():
+    folium.CircleMarker(
+        location=[row["lat"], row["lon"]],
+        radius=6,
+        color=get_color(row["risk"]),
+        fill=True,
+        fill_opacity=0.7,
+        popup=f"Risk: {row['risk']:.2f}"
+    ).add_to(m)
+
+# Vẽ tuyến tránh
+high_risk = data[data["risk"] > 0.6]
+low_risk = data[data["risk"] < 0.3]
+
+for i in range(5):
+    start = high_risk.sample(1).iloc[0]
+    end = low_risk.sample(1).iloc[0]
+    
+    folium.PolyLine(
+        locations=[[start["lat"], start["lon"]], [end["lat"], end["lon"]]],
+        color="blue",
+        weight=2,
+        dash_array="5,5"
+    ).add_to(m)
+
+m
