@@ -1,0 +1,55 @@
+!pip install folium geopy scipy
+
+import folium
+import random
+import numpy as np
+from geopy.distance import geodesic
+from scipy.optimize import linear_sum_assignment
+
+# 1. Trung tâm
+center = (10.7769, 106.7009)
+
+# 2. Map
+m = folium.Map(location=center, zoom_start=13)
+
+# 3. Tạo dữ liệu
+num_customers = 5
+num_drivers = 5
+
+customers = [(center[0] + random.uniform(-0.02, 0.02),
+              center[1] + random.uniform(-0.02, 0.02)) for _ in range(num_customers)]
+
+drivers = [(center[0] + random.uniform(-0.02, 0.02),
+            center[1] + random.uniform(-0.02, 0.02)) for _ in range(num_drivers)]
+
+# 4. Vẽ điểm
+for i, c in enumerate(customers):
+    folium.Marker(c, popup=f"Customer {i}", icon=folium.Icon(color="red")).add_to(m)
+
+for i, d in enumerate(drivers):
+    folium.Marker(d, popup=f"Driver {i}", icon=folium.Icon(color="blue")).add_to(m)
+
+# 5. TẠO MA TRẬN KHOẢNG CÁCH
+cost_matrix = np.zeros((num_customers, num_drivers))
+
+for i, c in enumerate(customers):
+    for j, d in enumerate(drivers):
+        cost_matrix[i][j] = geodesic(c, d).km
+
+# 6. TỐI ƯU GHÉP
+row_ind, col_ind = linear_sum_assignment(cost_matrix)
+
+# 7. Vẽ kết quả
+for i, j in zip(row_ind, col_ind):
+    c = customers[i]
+    d = drivers[j]
+
+    folium.PolyLine(
+        locations=[c, d],
+        color="green"
+    ).add_to(m)
+
+    print(f"Customer {i} ↔ Driver {j} | Distance: {cost_matrix[i][j]:.2f} km")
+
+# 8. Hiển thị
+m
