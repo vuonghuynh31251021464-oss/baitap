@@ -1,1 +1,26 @@
-hello
+import folium
+
+ueh_coords = [10.7828, 106.6958]
+m = folium.Map(location=ueh_coords, zoom_start=16, control_scale=True)
+
+locations = [
+    {"name": "UEH - Cơ sở A", "coords": [10.7828, 106.6958], "info": "Trung tâm", "icon": "university", "color": "red"},
+    {"name": "Hồ Con Rùa", "coords": [10.7827, 106.6968], "info": "Công viên công cộng", "icon": "tree-conifer", "color": "green"},
+    {"name": "Nhà Thờ Đức Bà", "coords": [10.7797, 106.6990], "info": "Địa điểm tham quan", "icon": "home", "color": "black"},
+    {"name": "Bệnh viện Nhi Đồng 2", "coords": [10.7820, 106.7015], "info": "Bệnh viện lân cận", "icon": "plus-sign", "color": "red"},
+    {"name": "Diamond Plaza", "coords": [10.7811, 106.6985], "info": "Trung tâm thương mại", "icon": "shopping-cart", "color": "blue"},
+    {"name": "Bưu điện Thành phố", "coords": [10.7799, 106.6999], "info": "Cơ quan hành chính", "icon": "envelope", "color": "cadetblue"}
+]
+
+for loc in locations:
+    folium.Marker(
+        location=loc["coords"],
+        popup=folium.Popup(f"<b>{loc['name']}</b><br>{loc['info']}", max_width=250),
+        tooltip=loc["name"],
+        icon=folium.Icon(color=loc["color"], icon=loc["icon"])
+    ).add_to(m)
+
+folium.LayerControl().add_to(m)
+
+m
+
