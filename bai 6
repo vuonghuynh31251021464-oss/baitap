@@ -1,0 +1,39 @@
+!pip install osmnx networkx matplotlib
+
+import osmnx as ox
+import networkx as nx
+import matplotlib.pyplot as plt
+
+# 1. Chọn khu vực (ví dụ: Quận 1, TP.HCM)
+place = "District 1, Ho Chi Minh City, Vietnam"
+
+# 2. Tải mạng lưới giao thông (drive = đường xe chạy)
+G = ox.graph_from_place(place, network_type='drive')
+
+# 3. Vẽ bản đồ mạng đường
+fig, ax = ox.plot_graph(G)
+
+# 4. PHÂN TÍCH CƠ BẢN
+
+# Số nút (giao lộ)
+num_nodes = len(G.nodes)
+
+# Số cạnh (đường)
+num_edges = len(G.edges)
+
+# Tổng chiều dài đường (mét)
+total_length = sum([data['length'] for u, v, data in G.edges(data=True)])
+
+# Chiều dài trung bình
+avg_length = total_length / num_edges
+
+# Mật độ mạng (edges/km²)
+area = ox.geocode_to_gdf(place).geometry.area.values[0] / 1e6  # km²
+density = num_edges / area
+
+# In kết quả
+print("Số nút:", num_nodes)
+print("Số cạnh:", num_edges)
+print("Tổng chiều dài đường (m):", round(total_length, 2))
+print("Chiều dài trung bình (m):", round(avg_length, 2))
+print("Mật độ mạng (edges/km²):", round(density, 2))
