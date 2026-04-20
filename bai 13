@@ -1,0 +1,64 @@
+!pip install folium pandas numpy
+
+import folium
+import pandas as pd
+import numpy as np
+
+# Tạo dữ liệu giả lập
+np.random.seed(42)
+
+# Kho
+warehouses = [(10.76, 106.68), (10.78, 106.66)]
+
+# Khách hàng
+customers = [(10.75 + np.random.rand()*0.05, 106.65 + np.random.rand()*0.05) for _ in range(30)]
+
+# Nhu cầu theo khu vực
+demand_points = pd.DataFrame({
+    "lat": 10.75 + np.random.rand(50)*0.05,
+    "lon": 106.65 + np.random.rand(50)*0.05,
+    "demand": np.random.randint(10, 100, 50)
+})
+
+# Tạo bản đồ
+m = folium.Map(location=[10.76, 106.68], zoom_start=13)
+
+# Layer kho
+warehouse_layer = folium.FeatureGroup(name="Warehouses")
+for wh in warehouses:
+    folium.Marker(location=wh, icon=folium.Icon(color="blue"), popup="Warehouse").add_to(warehouse_layer)
+
+# Layer khách hàng
+customer_layer = folium.FeatureGroup(name="Customers")
+for c in customers:
+    folium.CircleMarker(location=c, radius=4, color="black", fill=True).add_to(customer_layer)
+
+# Layer nhu cầu
+demand_layer = folium.FeatureGroup(name="Demand")
+def get_color(d):
+    if d < 30:
+        return "green"
+    elif d < 70:
+        return "orange"
+    else:
+        return "red"
+
+for _, row in demand_points.iterrows():
+    folium.CircleMarker(
+        location=[row["lat"], row["lon"]],
+        radius=5,
+        color=get_color(row["demand"]),
+        fill=True,
+        fill_opacity=0.7,
+        popup=f"Demand: {row['demand']}"
+    ).add_to(demand_layer)
+
+# Thêm layer vào map
+warehouse_layer.add_to(m)
+customer_layer.add_to(m)
+demand_layer.add_to(m)
+
+# Thêm điều khiển bật/tắt layer
+folium.LayerControl().add_to(m)
+
+m
