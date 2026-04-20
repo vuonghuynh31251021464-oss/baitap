@@ -1,0 +1,71 @@
+!pip install folium pandas numpy
+
+import pandas as pd
+import numpy as np
+import folium
+from math import sqrt
+
+# Hàm tính khoảng cách
+def distance(a, b):
+    return sqrt((a[0]-b[0])**2 + (a[1]-b[1])**2)
+
+# Tạo dữ liệu giả lập
+np.random.seed(42)
+n = 100
+
+data = pd.DataFrame({
+    "lat": 10.75 + np.random.rand(n)*0.05,
+    "lon": 106.65 + np.random.rand(n)*0.05,
+    "density": np.random.randint(10, 100, n),
+    "speed": np.random.randint(10, 60, n),
+    "demand": np.random.randint(10, 100, n)
+})
+
+# Tính risk và priority
+data["risk"] = data["density"] / data["speed"]
+data["priority"] = data["risk"] * 0.5 + data["demand"] * 0.5
+
+# Chuẩn hóa priority
+data["priority"] = (data["priority"] - data["priority"].min()) / (data["priority"].max() - data["priority"].min())
+
+# Kho trung tâm
+warehouse = (10.76, 106.68)
+
+# Chọn các điểm ưu tiên cao
+priority_points = data[data["priority"] > 0.7]
+
+# Tạo bản đồ
+m = folium.Map(location=[10.76, 106.68], zoom_start=13)
+
+# Vẽ kho
+folium.Marker(location=warehouse, icon=folium.Icon(color="blue"), popup="Warehouse").add_to(m)
+
+# Hàm màu
+def get_color(p):
+    if p < 0.3:
+        return "green"
+    elif p < 0.7:
+        return "orange"
+    else:
+        return "red"
+
+# Vẽ các điểm
+for _, row in data.iterrows():
+    folium.CircleMarker(
+        location=[row["lat"], row["lon"]],
+        radius=5,
+        color=get_color(row["priority"]),
+        fill=True,
+        fill_opacity=0.7,
+        popup=f"Priority: {row['priority']:.2f}"
+    ).add_to(m)
+
+# Vẽ tuyến đến điểm ưu tiên
+for _, row in priority_points.iterrows():
+    folium.PolyLine(
+        locations=[warehouse, [row["lat"], row["lon"]]],
+        color="blue",
+        weight=2
+    ).add_to(m)
+
+m
