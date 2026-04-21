@@ -6,23 +6,23 @@ import folium
 import random
 from math import sqrt
 
-# Hàm tính khoảng cách
+
 def distance(a, b):
     return sqrt((a[0]-b[0])**2 + (a[1]-b[1])**2)
 
-# Tạo dữ liệu giả lập
+
 np.random.seed(42)
 
-# 2 kho
+
 warehouses = [
     (10.76, 106.68),
     (10.78, 106.66)
 ]
 
-# 20 điểm giao hàng
+
 customers = [(10.75 + np.random.rand()*0.05, 106.65 + np.random.rand()*0.05) for _ in range(20)]
 
-# Thuật toán nearest neighbor
+
 def nearest_route(start, points):
     route = [start]
     remaining = points.copy()
@@ -36,13 +36,13 @@ def nearest_route(start, points):
     
     return route
 
-# Tuyến tối ưu (heuristic)
+
 optimized_routes = []
 for wh in warehouses:
     route = nearest_route(wh, customers.copy())
     optimized_routes.append(route)
 
-# Tuyến ngẫu nhiên (không tối ưu)
+
 random_routes = []
 for wh in warehouses:
     rand_points = customers.copy()
@@ -50,22 +50,21 @@ for wh in warehouses:
     route = [wh] + rand_points
     random_routes.append(route)
 
-# Tạo bản đồ
 m = folium.Map(location=[10.76, 106.68], zoom_start=13)
 
-# Vẽ kho
+
 for wh in warehouses:
     folium.Marker(location=wh, icon=folium.Icon(color="blue"), popup="Warehouse").add_to(m)
 
-# Vẽ khách hàng
+
 for c in customers:
     folium.CircleMarker(location=c, radius=4, color="black", fill=True).add_to(m)
 
-# Vẽ tuyến tối ưu (màu xanh)
+
 for route in optimized_routes:
     folium.PolyLine(route, color="green", weight=3).add_to(m)
 
-# Vẽ tuyến ngẫu nhiên (màu đỏ)
+
 for route in random_routes:
     folium.PolyLine(route, color="red", weight=1, dash_array="5,5").add_to(m)
 
