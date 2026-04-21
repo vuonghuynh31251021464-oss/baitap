@@ -5,7 +5,6 @@ import random
 import numpy as np
 from sklearn.cluster import KMeans
 
-# 1. Tạo dữ liệu giả lập (20 khách hàng quanh TP.HCM)
 customers = []
 for _ in range(20):
     lat = 10.75 + random.uniform(-0.05, 0.05)
@@ -14,7 +13,6 @@ for _ in range(20):
 
 customers = np.array(customers)
 
-# 2. Phân cụm (ví dụ chọn 3 cụm)
 k = 3
 kmeans = KMeans(n_clusters=k, random_state=0)
 kmeans.fit(customers)
@@ -22,12 +20,10 @@ kmeans.fit(customers)
 labels = kmeans.labels_
 centroids = kmeans.cluster_centers_
 
-# 3. Vẽ bản đồ
 m = folium.Map(location=[10.75, 106.67], zoom_start=12)
 
 colors = ['red', 'blue', 'green', 'purple', 'orange']
 
-# Vẽ khách hàng
 for i, point in enumerate(customers):
     folium.CircleMarker(
         location=[point[0], point[1]],
@@ -36,7 +32,6 @@ for i, point in enumerate(customers):
         fill=True
     ).add_to(m)
 
-# Vẽ tâm cụm (đề xuất trạm/kho)
 for i, center in enumerate(centroids):
     folium.Marker(
         location=[center[0], center[1]],
