@@ -5,37 +5,37 @@ import numpy as np
 import folium
 from sklearn.linear_model import LinearRegression
 
-# Tạo dữ liệu giả lập
+
 np.random.seed(42)
 n = 200
 
 data = pd.DataFrame({
     "lat": 10.75 + np.random.rand(n)*0.05,
     "lon": 106.65 + np.random.rand(n)*0.05,
-    "day": np.random.randint(1, 31, n)  # ngày trong tháng
+    "day": np.random.randint(1, 31, n)  
 })
 
-# Giả lập xu hướng tăng theo thời gian
+
 data["value"] = (
     20 + 
     data["day"] * 2 + 
     np.random.randint(-5, 5, n)
 )
 
-# Huấn luyện mô hình
+
 X = data[["lat", "lon", "day"]]
 y = data["value"]
 
 model = LinearRegression()
 model.fit(X, y)
 
-# Dự báo cho ngày tương lai (ví dụ ngày 35)
+
 future_day = 35
 data["predicted"] = model.predict(
     np.column_stack([data["lat"], data["lon"], [future_day]*n])
 )
 
-# Tạo bản đồ
+
 m = folium.Map(location=[10.76, 106.68], zoom_start=13)
 
 def get_color(v):
@@ -46,7 +46,7 @@ def get_color(v):
     else:
         return "red"
 
-# Hiển thị dự báo
+
 for _, row in data.iterrows():
     folium.CircleMarker(
         location=[row["lat"], row["lon"]],
