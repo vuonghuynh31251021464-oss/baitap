@@ -2,8 +2,7 @@ import folium
 from folium.plugins import HeatMap
 import random
 
-# ===== 1. Tạo dữ liệu giả lập (tọa độ quanh TP.HCM) =====
-center = [10.7769, 106.7009]  # trung tâm (Quận 1)
+center = [10.7769, 106.7009] 
 
 data = []
 for _ in range(200):
@@ -11,11 +10,6 @@ for _ in range(200):
     lon = center[1] + random.uniform(-0.02, 0.02)
     data.append([lat, lon])
 
-# ===== 2. Tạo bản đồ =====
 m = folium.Map(location=center, zoom_start=13)
-
-# ===== 3. Tạo heatmap =====
 HeatMap(data).add_to(m)
-
-# Hiển thị
 m
