@@ -1,0 +1,38 @@
+
+!pip install geopandas folium matplotlib mapclassify
+
+import geopandas as gpd
+import pandas as pd
+import matplotlib.pyplot as plt
+import folium
+import numpy as np
+
+
+url = "https://raw.githubusercontent.com/python-visualization/folium/master/examples/data/world-countries.json"
+gdf = gpd.read_file(url)
+
+
+gdf["value"] = np.random.randint(100, 1000, size=len(gdf))
+
+
+gdf = gdf.reset_index()
+
+
+gdf.plot(column="value", cmap="OrRd", legend=True, edgecolor="black")
+plt.title("Choropleth Map")
+plt.axis("off")
+plt.show()
+
+
+m = folium.Map(location=[20, 0], zoom_start=2)
+
+folium.Choropleth(
+    geo_data=gdf.to_json(),   
+    data=gdf,
+    columns=["index", "value"],  
+    key_on="feature.id",
+    fill_color="YlOrRd",
+    legend_name="Value"
+).add_to(m)
+
+m
