@@ -5,7 +5,7 @@ import numpy as np
 import folium
 import random
 
-# Tạo dữ liệu giả lập
+
 np.random.seed(42)
 n = 100
 data = pd.DataFrame({
@@ -15,11 +15,11 @@ data = pd.DataFrame({
     "speed": np.random.randint(10, 60, n)
 })
 
-# Tính risk
+
 data["risk"] = data["traffic_density"] / data["speed"]
 data["risk"] = (data["risk"] - data["risk"].min()) / (data["risk"].max() - data["risk"].min())
 
-# Tạo bản đồ
+
 m = folium.Map(location=[10.76, 106.68], zoom_start=13)
 
 def get_color(risk):
@@ -30,7 +30,7 @@ def get_color(risk):
     else:
         return "red"
 
-# Vẽ điểm
+
 for _, row in data.iterrows():
     folium.CircleMarker(
         location=[row["lat"], row["lon"]],
@@ -41,7 +41,7 @@ for _, row in data.iterrows():
         popup=f"Risk: {row['risk']:.2f}"
     ).add_to(m)
 
-# Vẽ tuyến tránh
+
 high_risk = data[data["risk"] > 0.6]
 low_risk = data[data["risk"] < 0.3]
 
