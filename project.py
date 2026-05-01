@@ -1,22 +1,26 @@
+!pip install scikit-fuzzy
 import skfuzzy as fuzz
 from skfuzzy import control as ctrl
 import numpy as np
 from geopy.distance import geodesic
 import folium
 import random
-import tkinter as tk
-from tkinter import messagebox
-import webview
+from IPython.display import display
 
-# ===== FUZZY SETUP =====
+# Install scikit-fuzzy if not already installed
+!pip install scikit-fuzzy
+
+# ===== INPUT =====
 friendliness = ctrl.Antecedent(np.arange(0, 10.1, 0.1), 'friendliness')
 privacy = ctrl.Antecedent(np.arange(0, 10.1, 0.1), 'privacy')
 distance = ctrl.Antecedent(np.arange(0, 20.1, 0.1), 'distance')
 base_cost = ctrl.Antecedent(np.arange(0, 100.1, 0.1), 'base_cost')
 
+# ===== OUTPUT =====
 vehicle_type = ctrl.Consequent(np.arange(0, 10.1, 0.1), 'vehicle_type')
+cost_total = ctrl.Consequent(np.arange(0, 200.1, 0.1), 'cost_total')
 
-# Membership
+# ===== MEMBERSHIP =====
 friendliness['low'] = fuzz.trimf(friendliness.universe, [0,0,5])
 friendliness['high'] = fuzz.trimf(friendliness.universe, [5,10,10])
 
@@ -35,128 +39,104 @@ vehicle_type['bike'] = fuzz.trimf(vehicle_type.universe, [0,0,4])
 vehicle_type['car'] = fuzz.trimf(vehicle_type.universe, [3,5,7])
 vehicle_type['premium'] = fuzz.trimf(vehicle_type.universe, [6,10,10])
 
+cost_total['cheap'] = fuzz.trimf(cost_total.universe, [0,0,80])
+cost_total['normal'] = fuzz.trimf(cost_total.universe, [60,120,160])
+cost_total['expensive'] = fuzz.trimf(cost_total.universe, [140,200,200])
+
+# ===== RULES =====
 rules = [
     ctrl.Rule(distance['near'] & base_cost['low'], vehicle_type['bike']),
     ctrl.Rule(distance['far'] & privacy['high'], vehicle_type['car']),
     ctrl.Rule(privacy['high'] & base_cost['high'], vehicle_type['premium']),
     ctrl.Rule(friendliness['high'] & distance['medium'], vehicle_type['car']),
+    ctrl.Rule(distance['far'] & base_cost['low'], vehicle_type['car']),
+
+    ctrl.Rule(distance['near'] & base_cost['low'], cost_total['cheap']),
+    ctrl.Rule(distance['medium'] & base_cost['medium'], cost_total['normal']),
+    ctrl.Rule(distance['far'] | base_cost['high'], cost_total['expensive']),
+    ctrl.Rule(privacy['high'] & base_cost['high'], cost_total['expensive']),
+    ctrl.Rule(friendliness['high'] & base_cost['medium'], cost_total['normal'])
 ]
 
 system = ctrl.ControlSystem(rules)
 
-# ===== USER LOCATION =====
+# ===== USER =====
 user_location = (10.7769, 106.7009)
 
-# ===== GLOBAL WINDOW =====
-map_window = None
+# ===== CALCULATE =====
 
-# ===== MAIN FUNCTION =====
-def find_driver():
-    global map_window
+# STEP 1: chọn xe phù hợp với user (fuzzy)
+sim_user = ctrl.ControlSystemSimulation(system)
 
-    try:
-        f = float(entry_friend.get())
-        p = float(entry_privacy.get())
-        d = float(entry_distance.get())
-        c = float(entry_cost.get())
-    except:
-        messagebox.showerror("Lỗi", "Nhập số hợp lệ!")
-        return
+sim_user.input['friendliness'] = random.uniform(3,10)
+sim_user.input['privacy'] = random.uniform(3,10)
+sim_user.input['distance'] = random.uniform(1,10)
+sim_user.input['base_cost'] = random.uniform(20,100)
 
-    # ===== FUZZY =====
-    sim = ctrl.ControlSystemSimulation(system)
-    sim.input['friendliness'] = f
-    sim.input['privacy'] = p
-    sim.input['distance'] = d
-    sim.input['base_cost'] = c
-    sim.compute()
+sim_user.compute()
 
-    v = sim.output['vehicle_type']
+v_score_user = sim_user.output.get('vehicle_type', 0)
 
-    if v < 4:
-        best_vehicle = "BIKE 🏍️"
-    elif v < 7:
-        best_vehicle = "CAR 🚗"
-    else:
-        best_vehicle = "PREMIUM 🚘"
+if v_score_user < 4:
+    best_vehicle_type = "BIKE 🛵"
+elif v_score_user < 7:
+    best_vehicle_type = "CAR 🚗"
+else:
+    best_vehicle_type = "PREMIUM 🚘"
 
-    # ===== RANDOM DRIVER =====
-    vehicle_list = ["BIKE 🏍️", "CAR 🚗", "PREMIUM 🚘"]
-    drivers = []
+# STEP 2: random driver + random xe
+vehicle_list = ["BIKE 🛵", "CAR 🚗", "PREMIUM 🚘"]
 
-    for _ in range(8):
-        loc = (user_location[0] + random.uniform(-0.02, 0.02),
-               user_location[1] + random.uniform(-0.02, 0.02))
-        veh = random.choice(vehicle_list)
-        dist = geodesic(user_location, loc).km
-        drivers.append((loc, veh, dist))
+results = []
 
-    # ===== CHỌN DRIVER =====
-    filtered = [x for x in drivers if x[1] == best_vehicle]
-    if not filtered:
-        filtered = drivers
+for _ in range(6):
+    d = (user_location[0] + random.uniform(-0.01, 0.01),
+         user_location[1] + random.uniform(-0.01, 0.01))
 
-    best = min(filtered, key=lambda x: x[2])
-    best_loc, best_v, best_dist = best
+    vehicle = random.choice(vehicle_list)
 
-    result_label.config(
-        text=f"Xe phù hợp: {best_vehicle}\nTài xế gần nhất: {round(best_dist,2)} km"
-    )
+    dist_km = geodesic(user_location, d).km
 
-    # ===== MAP =====
-    m = folium.Map(location=user_location, zoom_start=14)
+    results.append((d, vehicle, dist_km))
 
-    folium.Marker(user_location, popup="YOU").add_to(m)
+# ===== BEST =====
+filtered = [r for r in results if r[1] == best_vehicle_type]
 
-    for loc, veh, dist in drivers:
-        color = "green" if veh == best_vehicle else "gray"
+if not filtered:
+    filtered = results
+    print("⚠️ Không có đúng loại xe → lấy gần nhất bất kỳ")
 
-        folium.Marker(
-            loc,
-            popup=f"{veh} | {round(dist,2)} km",
-            icon=folium.Icon(color=color)
-        ).add_to(m)
+best_choice = min(filtered, key=lambda x: x[2])
+
+best_location, best_vehicle, best_distance = best_choice
+
+print("===== KẾT QUẢ =====")
+print("Xe phù hợp:", best_vehicle_type)
+print("Tài xế gần nhất:", round(best_distance,2), "km")
+
+# ===== MAP =====
+m = folium.Map(location=user_location, zoom_start=14)
+
+folium.Marker(user_location, popup="YOU", icon=folium.Icon(color='blue')).add_to(m)
+
+for d, vehicle, dist in results:
+    color = "green" if vehicle == best_vehicle_type else "gray"
 
     folium.Marker(
-        best_loc,
-        popup="BEST",
-        icon=folium.Icon(color='red')
+        d,
+        popup=f"{vehicle} | Dist:{round(dist,2)} km",
+        icon=folium.Icon(color=color)
     ).add_to(m)
 
-    html = m.get_root().render()
+    folium.PolyLine([user_location, d], color=color).add_to(m)
 
-    # ===== HIỂN THỊ MAP (KHÔNG 404) =====
-    if map_window is None:
-        map_window = webview.create_window("Map", html=html, width=800, height=600)
-        webview.start()
-    else:
-        map_window.load_html(html)
+# highlight best
+folium.Marker(
+    best_location,
+    popup=f"⭐ BEST\n{best_vehicle}\nDist:{round(best_distance,2)} km",
+    icon=folium.Icon(color='red', icon='star')
+).add_to(m)
 
-# ===== TKINTER UI =====
-root = tk.Tk()
-root.title("Ride App 🚗")
-root.geometry("400x400")
+folium.PolyLine([user_location, best_location], color="red", weight=6).add_to(m)
 
-tk.Label(root, text="Friendliness (0-10)").pack()
-entry_friend = tk.Entry(root)
-entry_friend.pack()
-
-tk.Label(root, text="Privacy (0-10)").pack()
-entry_privacy = tk.Entry(root)
-entry_privacy.pack()
-
-tk.Label(root, text="Distance (km)").pack()
-entry_distance = tk.Entry(root)
-entry_distance.pack()
-
-tk.Label(root, text="Budget (0-100)").pack()
-entry_cost = tk.Entry(root)
-entry_cost.pack()
-
-tk.Button(root, text="Tìm xe", command=find_driver).pack(pady=10)
-
-result_label = tk.Label(root, text="Kết quả sẽ hiển thị ở đây", fg="blue")
-result_label.pack()
-
-root.mainloop()
-
+display(m)
