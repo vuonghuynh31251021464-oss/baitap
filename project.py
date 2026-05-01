@@ -7,7 +7,7 @@ import random
 from IPython.display import display
 
 # Install scikit-fuzzy if not already installed
-!pip install scikit-fuzzy
+
 
 # ===== INPUT =====
 friendliness = ctrl.Antecedent(np.arange(0, 10.1, 0.1), 'friendliness')
