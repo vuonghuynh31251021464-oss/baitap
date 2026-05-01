@@ -1,3 +1,10 @@
+git init
+git add .
+git commit -m "first commit"
+git branch -M main
+git remote add origin https://github.com/USERNAME/ride-app-fuzzy.git
+git push -u origin main
+
 import skfuzzy as fuzz
 from skfuzzy import control as ctrl
 import numpy as np
